@@ -1,0 +1,151 @@
+<mxfile host="app.diagrams.net" modified="2026-03-28T00:00:00.000Z" agent="Codex" version="24.7.17">
+  <diagram id="architecture" name="Page-1">
+    <mxGraphModel dx="1600" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="bg" value="实时自监督学习图像去噪处理平台 - 项目架构图" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#00d2ff;fillColor=#07111f;fontColor=#e8f1ff;fontSize=24;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="420" y="20" width="760" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="user" value="用户 / 浏览器" style="shape=mxgraph.basic.cloud;whiteSpace=wrap;html=1;fillColor=#10233b;strokeColor=#55d8ff;fontColor=#e8f1ff;" vertex="1" parent="1">
+          <mxGeometry x="30" y="150" width="160" height="90" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="front" value="浏览器前端" style="swimlane;rounded=1;html=1;startSize=30;fillColor=#0b1a2d;strokeColor=#1dd6ff;fontColor=#e8f1ff;" vertex="1" parent="1">
+          <mxGeometry x="240" y="100" width="300" height="280" as="geometry"/>
+        </mxCell>
+        <mxCell id="front1" value="templates/index.html&#xa;单页布局" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0e2238;strokeColor=#2ad4ff;fontColor=#e8f1ff;" vertex="1" parent="front">
+          <mxGeometry x="20" y="50" width="120" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="front2" value="static/js/app.js&#xa;上传 / 模式切换 / ROI / 图表联动" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0e2238;strokeColor=#2ad4ff;fontColor=#e8f1ff;" vertex="1" parent="front">
+          <mxGeometry x="155" y="50" width="125" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="front3" value="dashboard.css + ECharts&#xa;界面和分析图表" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0e2238;strokeColor=#2ad4ff;fontColor=#e8f1ff;" vertex="1" parent="front">
+          <mxGeometry x="60" y="170" width="180" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="django" value="Django Web 层" style="swimlane;rounded=1;html=1;startSize=30;fillColor=#0b1a2d;strokeColor=#1dd6ff;fontColor=#e8f1ff;" vertex="1" parent="1">
+          <mxGeometry x="600" y="100" width="320" height="280" as="geometry"/>
+        </mxCell>
+        <mxCell id="django1" value="manage.py&#xa;本地开发入口" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0e2238;strokeColor=#2ad4ff;fontColor=#e8f1ff;" vertex="1" parent="django">
+          <mxGeometry x="20" y="50" width="110" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="django2" value="urls.py&#xa;页面 / API 路由" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0e2238;strokeColor=#2ad4ff;fontColor=#e8f1ff;" vertex="1" parent="django">
+          <mxGeometry x="145" y="50" width="135" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="django3" value="core/views.py&#xa;上传 / 推理 / 训练 / 对比 / 预置图 API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0e2238;strokeColor=#2ad4ff;fontColor=#e8f1ff;" vertex="1" parent="django">
+          <mxGeometry x="50" y="165" width="220" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="core" value="平台核心服务" style="swimlane;rounded=1;html=1;startSize=30;fillColor=#0b1a2d;strokeColor=#1dd6ff;fontColor=#e8f1ff;" vertex="1" parent="1">
+          <mxGeometry x="980" y="100" width="360" height="280" as="geometry"/>
+        </mxCell>
+        <mxCell id="core1" value="core/models.py&#xa;ModelManager&#xa;算法发现 / 注册 / 权重加载 / 推理分发" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0e2238;strokeColor=#2ad4ff;fontColor=#e8f1ff;" vertex="1" parent="core">
+          <mxGeometry x="20" y="50" width="150" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="core2" value="core/metrics.py&#xa;PSNR / SSIM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0e2238;strokeColor=#2ad4ff;fontColor=#e8f1ff;" vertex="1" parent="core">
+          <mxGeometry x="190" y="50" width="140" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="core3" value="训练任务线程&#xa;start_training + status polling" style="shape=mxgraph.basic.queue;whiteSpace=wrap;html=1;fillColor=#122742;strokeColor=#8a6cff;fontColor=#e8f1ff;" vertex="1" parent="core">
+          <mxGeometry x="100" y="175" width="170" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="alg" value="算法层" style="swimlane;rounded=1;html=1;startSize=30;fillColor=#0b1a2d;strokeColor=#1dd6ff;fontColor=#e8f1ff;" vertex="1" parent="1">
+          <mxGeometry x="980" y="430" width="360" height="250" as="geometry"/>
+        </mxCell>
+        <mxCell id="alg1" value="algorithms/*.py&#xa;统一平台算法接口封装" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0e2238;strokeColor=#2ad4ff;fontColor=#e8f1ff;" vertex="1" parent="alg">
+          <mxGeometry x="20" y="55" width="150" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="alg2" value="algorithms/SSID/*&#xa;预训练 / 推理相关模型实现" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0e2238;strokeColor=#2ad4ff;fontColor=#e8f1ff;" vertex="1" parent="alg">
+          <mxGeometry x="190" y="55" width="145" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="alg3" value="algorithms/SSSID/*&#xa;自监督训练相关模型实现" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0e2238;strokeColor=#2ad4ff;fontColor=#e8f1ff;" vertex="1" parent="alg">
+          <mxGeometry x="105" y="155" width="150" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="fs" value="文件系统资源" style="swimlane;rounded=1;html=1;startSize=30;fillColor=#0b1a2d;strokeColor=#1dd6ff;fontColor=#e8f1ff;" vertex="1" parent="1">
+          <mxGeometry x="180" y="430" width="720" height="250" as="geometry"/>
+        </mxCell>
+        <mxCell id="fs1" value="models/weights&#xa;预训练权重" style="shape=cylinder;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#13253d;strokeColor=#ff4db8;fontColor=#e8f1ff;" vertex="1" parent="fs">
+          <mxGeometry x="20" y="65" width="120" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="fs2" value="media/preset&#xa;预置净噪对" style="shape=cylinder;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#13253d;strokeColor=#ff4db8;fontColor=#e8f1ff;" vertex="1" parent="fs">
+          <mxGeometry x="160" y="65" width="120" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="fs3" value="media/uploads&#xa;临时上传" style="shape=cylinder;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#13253d;strokeColor=#ff4db8;fontColor=#e8f1ff;" vertex="1" parent="fs">
+          <mxGeometry x="300" y="65" width="120" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="fs4" value="media/results&#xa;推理 / 对比结果" style="shape=cylinder;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#13253d;strokeColor=#ff4db8;fontColor=#e8f1ff;" vertex="1" parent="fs">
+          <mxGeometry x="440" y="65" width="120" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="fs5" value="media/intermediate&#xa;训练中间结果" style="shape=cylinder;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#13253d;strokeColor=#ff4db8;fontColor=#e8f1ff;" vertex="1" parent="fs">
+          <mxGeometry x="580" y="65" width="120" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="fs6" value="static / templates&#xa;页面模板和静态资源" style="shape=cylinder;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#13253d;strokeColor=#ff4db8;fontColor=#e8f1ff;" vertex="1" parent="fs">
+          <mxGeometry x="260" y="160" width="180" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="runtime" value="运行环境&#xa;Python + requirements.txt&#xa;Docker + docker-compose&#xa;Gunicorn" style="shape=mxgraph.basic.cloud;whiteSpace=wrap;html=1;fillColor=#122742;strokeColor=#8a6cff;fontColor=#e8f1ff;" vertex="1" parent="1">
+          <mxGeometry x="30" y="470" width="120" height="150" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="note1" value="核心业务链路&#xa;1. 推理去噪&#xa;2. 自监督训练 + 轮询&#xa;3. 多算法对比 + ROI 局部分析" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#13253d;strokeColor=#8a6cff;fontColor=#e8f1ff;" vertex="1" parent="1">
+          <mxGeometry x="30" y="680" width="260" height="110" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e1" edge="1" parent="1" source="user" target="front">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="front" target="django">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="django3" target="core1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="django3" target="core2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="django3" target="core3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="core1" target="alg1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="alg1" target="alg2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="alg1" target="alg3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="core1" target="fs1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="django3" target="fs2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="django3" target="fs3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e12" edge="1" parent="1" source="django3" target="fs4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e13" edge="1" parent="1" source="core3" target="fs5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e14" edge="1" parent="1" source="django" target="fs6">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e15" edge="1" parent="1" source="runtime" target="django1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e16" edge="1" parent="1" source="runtime" target="fs1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e17" edge="1" parent="1" source="runtime" target="fs2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

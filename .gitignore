@@ -1,0 +1,10 @@
+# Python 缓存
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 模型权重 / 大文件
+algorithms/SSID/pretrained_models/
+algorithms/SSSID/pretrained_models/
+*.pkl
+*.bin

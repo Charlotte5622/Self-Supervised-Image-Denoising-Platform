@@ -1,0 +1,367 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时自监督学习图像去噪处理平台</title>
+    <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=20260328-ss-filter">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+
+<!-- ═══════ 顶部标题栏 ═══════ -->
+<header class="top-bar">
+    <div class="top-bar__left">
+        <span class="logo-icon">◈</span>
+        <h1>实时自监督学习图像去噪处理平台</h1>
+    </div>
+    <div class="top-bar__center">
+        <div class="status-indicator" id="gpuStatus">
+            <span class="dot"></span>
+            <span class="label">GPU 检测中...</span>
+        </div>
+    </div>
+    <div class="top-bar__right">
+        <span id="clockDisplay">--:--:--</span>
+    </div>
+</header>
+
+<!-- ═══════ 主三栏布局 ═══════ -->
+<main class="dashboard">
+
+    <!-- ════ 左侧：控制台 ════ -->
+    <aside class="panel panel--left glass-panel">
+        <div class="corner-tr"></div><div class="corner-bl"></div>
+        <div class="panel__header">
+            <span class="panel__icon">⚙</span>
+            <h2>控制台</h2>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label">运行模式</label>
+            <div class="mode-switch mode-switch--tri">
+                <button class="mode-btn active" data-mode="inference">推理去噪</button>
+                <button class="mode-btn" data-mode="training">自监督训练</button>
+                <button class="mode-btn" data-mode="compare">多算法对比</button>
+            </div>
+        </div>
+
+        <div class="control-group" id="singleModelGroup">
+            <label class="control-label">选择模型 / 架构</label>
+            <select id="modelSelect" class="neon-select"><option value="">加载中...</option></select>
+            <div class="model-category-tag" id="modelCategoryTag"></div>
+        </div>
+
+        <div class="control-group" id="multiModelGroup" style="display:none;">
+            <label class="control-label">选择对比算法（多选）</label>
+            <div class="checkbox-list" id="modelCheckboxList"></div>
+            <div class="select-actions">
+                <button class="mini-btn" id="btnSelectAll">全选</button>
+                <button class="mini-btn" id="btnSelectNone">清空</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label">上传含噪图像</label>
+            <div class="upload-zone" id="uploadZone">
+                <input type="file" id="fileInput" accept="image/*" hidden>
+                <div class="upload-zone__content">
+                    <span class="upload-icon">⬆</span>
+                    <p>点击或拖拽上传</p>
+                    <p class="upload-hint">PNG / JPG / BMP ≤ 20MB，临时缓存会自动清理</p>
+                </div>
+            </div>
+            <div class="upload-preview" id="uploadPreview" style="display:none;">
+                <img id="previewImg" alt="预览">
+                <span class="filename" id="previewName"></span>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label">Ground Truth<span class="gt-hint" id="gtHint">（可选）</span></label>
+            <div class="upload-zone upload-zone--small" id="gtUploadZone">
+                <input type="file" id="gtFileInput" accept="image/*" hidden>
+                <div class="upload-zone__content">
+                    <span class="upload-icon">⬆</span>
+                    <p>上传真值图</p>
+                </div>
+            </div>
+            <div class="upload-preview" id="gtPreview" style="display:none;">
+                <img id="gtPreviewImg" alt="GT预览">
+                <span class="filename" id="gtPreviewName"></span>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label">预置示例图像</label>
+            <div class="preset-dataset-grid" id="presetDatasetGrid">
+                <p class="placeholder-text">暂无预置数据集</p>
+            </div>
+        </div>
+
+        <div class="control-group train-only" id="trainParams" style="display:none;">
+            <label class="control-label">训练参数</label>
+            <div class="param-row">
+                <label>Epochs</label>
+                <input type="number" id="inputEpochs" value="200" min="10" max="2000" class="neon-input">
+            </div>
+            <div class="param-row">
+                <label>学习率</label>
+                <input type="number" id="inputLR" value="0.001" step="0.0001" min="0.00001" class="neon-input">
+            </div>
+        </div>
+
+        <div class="panel-action-bar">
+            <button class="action-btn" id="btnExecute">
+                <span class="btn-text">开始去噪</span>
+                <span class="btn-loader" style="display:none;"></span>
+            </button>
+        </div>
+        <div class="panel-bottom-corners" aria-hidden="true">
+            <span class="corner-fix corner-fix--left"></span>
+            <span class="corner-fix corner-fix--right"></span>
+        </div>
+    </aside>
+
+    <!-- ════ 中央：图像视窗 ════ -->
+    <section class="panel panel--center">
+        <div class="panel__header">
+            <span class="panel__icon">◉</span>
+            <h2 id="centerTitle">图像对比</h2>
+            <div class="center-toolbar" id="compareCenterToolbar" style="display:none;">
+                <button class="toolbar-btn active" type="button" data-compare-view="bars">柱状图</button>
+                <button class="toolbar-btn" type="button" data-compare-view="distribution">图像分布图</button>
+                <div class="toolbar-subgroup" id="compareDistributionToolbar" style="display:none;">
+                    <button class="toolbar-btn active" type="button" data-compare-distribution="active">当前算法</button>
+                    <button class="toolbar-btn" type="button" data-compare-distribution="all">全部结果</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="comparison-viewport" id="comparisonViewport">
+            <!-- 雷达扫描空状态 -->
+            <div class="empty-state" id="emptyState">
+                <div class="radar-wrap">
+                    <div class="radar-ring"></div>
+                    <div class="radar-ring"></div>
+                    <div class="radar-ring"></div>
+                    <div class="radar-sweep"></div>
+                    <div class="radar-dot"></div>
+                    <div class="radar-dot"></div>
+                    <div class="radar-dot"></div>
+                </div>
+                <p>上传图像并执行去噪后<br>对比结果将在此展示</p>
+            </div>
+
+            <div class="image-slider" id="imageSlider" style="display:none;">
+                <div class="slider-container">
+                    <img class="slider-img slider-img--before" id="imgBefore" alt="含噪原图">
+                    <div class="slider-overlay" id="sliderOverlay">
+                        <img class="slider-img slider-img--after" id="imgAfter" alt="去噪结果">
+                    </div>
+                    <div class="slider-handle" id="sliderHandle">
+                        <div class="slider-handle__line"></div>
+                        <div class="slider-handle__circle"><span>⇔</span></div>
+                        <div class="slider-handle__line"></div>
+                    </div>
+                </div>
+                <div class="slider-labels">
+                    <span class="label-before">去噪结果</span>
+                    <span class="label-after">含噪原图</span>
+                </div>
+            </div>
+
+            <div class="compare-chart-wrapper" id="compareChartWrapper" style="display:none;">
+                <div class="compare-chart-container" id="compareChart"></div>
+            </div>
+        </div>
+
+        <div class="scan-overlay" id="scanOverlay" style="display:none;">
+            <div class="scan-line"></div>
+            <p class="scan-text">AI PROCESSING</p>
+        </div>
+    </section>
+
+    <!-- ════ 右侧：数据分析 ════ -->
+    <aside class="panel panel--right glass-panel">
+        <div class="corner-tr"></div><div class="corner-bl"></div>
+        <div class="panel__header">
+            <span class="panel__icon">📊</span>
+            <h2>数据分析</h2>
+        </div>
+
+        <div class="compare-analysis-panel" id="compareAnalysisPanel" style="display:none;">
+            <div class="progress-section compare-progress-section" id="compareProgressSection">
+                <h3 class="chart-title">推理进展</h3>
+                <div class="progress-bar-wrapper">
+                    <div class="progress-bar progress-bar--compare">
+                        <div class="progress-fill" id="compareProgressFill" style="width:0%"></div>
+                    </div>
+                    <span class="progress-text" id="compareProgressText">0%</span>
+                </div>
+                <div class="progress-detail compare-progress-detail">
+                    <span>状态: <strong id="compareProgressStatus">等待开始</strong></span>
+                    <span>算法数: <strong id="compareModelCount">0</strong></span>
+                </div>
+            </div>
+
+            <div class="chart-section compare-scope-section">
+                <h3 class="chart-title">分析范围</h3>
+                <div class="scope-switch" id="compareScopeSwitch">
+                    <button class="scope-btn active" type="button" data-compare-scope="full">原图分析</button>
+                    <button class="scope-btn" type="button" data-compare-scope="roi">区域选择</button>
+                </div>
+                <div class="compare-roi-panel" id="compareRoiPanel" style="display:none;">
+                    <div class="compare-roi-preview is-empty" id="compareRoiPreview">
+                        <img id="compareRoiImage" alt="区域选择预览" draggable="false">
+                        <div class="compare-roi-window" id="compareRoiWindow"></div>
+                    </div>
+                    <div class="compare-roi-controls">
+                        <label for="compareRoiSize">窗口大小</label>
+                        <input type="range" id="compareRoiSize" min="20" max="80" step="2" value="36">
+                        <span id="compareRoiSizeValue">36%</span>
+                    </div>
+                    <div class="compare-roi-meta">
+                        <span id="compareRoiCoords">x 32% · y 32%</span>
+                        <span id="compareRoiPixels">ROI --</span>
+                    </div>
+                </div>
+                <div class="distribution-note" id="compareScopeNote">当前使用整张图像统计多算法指标。</div>
+            </div>
+        </div>
+
+        <!-- 仪表盘 Gauge -->
+        <div class="gauge-row" id="gaugeRow">
+            <div class="gauge-container" id="gaugePsnr"></div>
+            <div class="gauge-container" id="gaugeSsim"></div>
+        </div>
+
+        <!-- 指标卡片 -->
+        <div class="metrics-grid" id="metricsGrid">
+            <div class="metric-card metric-card--icon">
+                <div class="metric-icon metric-icon--before">◫</div>
+                <div class="metric-content">
+                    <div class="metric-label">PSNR Before</div>
+                    <div class="metric-value" id="metricPsnrBefore">--</div>
+                    <div class="metric-unit">dB</div>
+                </div>
+            </div>
+            <div class="metric-card metric-card--icon highlight">
+                <div class="metric-icon metric-icon--after">◧</div>
+                <div class="metric-content">
+                    <div class="metric-label">PSNR After</div>
+                    <div class="metric-value" id="metricPsnrAfter">--</div>
+                    <div class="metric-unit">dB</div>
+                </div>
+            </div>
+            <div class="metric-card metric-card--icon">
+                <div class="metric-icon metric-icon--before">◎</div>
+                <div class="metric-content">
+                    <div class="metric-label">SSIM Before</div>
+                    <div class="metric-value" id="metricSsimBefore">--</div>
+                </div>
+            </div>
+            <div class="metric-card metric-card--icon highlight">
+                <div class="metric-icon metric-icon--after">◉</div>
+                <div class="metric-content">
+                    <div class="metric-label">SSIM After</div>
+                    <div class="metric-value" id="metricSsimAfter">--</div>
+                </div>
+            </div>
+            <div class="metric-card metric-card--icon metric-card--elapsed">
+                <div class="metric-icon metric-icon--time">◷</div>
+                <div class="metric-content">
+                    <div class="metric-label">Elapsed</div>
+                    <div class="metric-value" id="metricTime">--</div>
+                    <div class="metric-unit">ms</div>
+                </div>
+            </div>
+            <div class="metric-card metric-card--ghost" aria-hidden="true"></div>
+        </div>
+
+        <!-- 对比表格 -->
+        <div class="compare-table-section" id="compareTableSection" style="display:none;">
+            <h3 class="chart-title">对比结果明细</h3>
+            <div class="compare-table-wrapper">
+                <table class="compare-table" id="compareTable">
+                    <thead><tr><th>算法</th><th>PSNR</th><th>SSIM</th><th>耗时</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Loss 曲线 -->
+        <div class="chart-section" id="chartSection" style="display:none;">
+            <h3 class="chart-title">实时 Loss 曲线</h3>
+            <div class="chart-container" id="lossChart"></div>
+        </div>
+
+        <!-- 训练进度 -->
+        <div class="progress-section" id="progressSection" style="display:none;">
+            <h3 class="chart-title">训练进度</h3>
+            <div class="progress-bar-wrapper">
+                <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+                <span class="progress-text" id="progressText">0%</span>
+            </div>
+            <div class="progress-detail">
+                <span>Epoch: <strong id="epochDisplay">0/0</strong></span>
+                <span>LR: <strong id="lrDisplay">--</strong></span>
+            </div>
+        </div>
+
+        <div class="chart-section distribution-section" id="distributionSection">
+            <h3 class="chart-title">图像分布对比</h3>
+            <div class="distribution-chart" id="distributionChart"></div>
+            <div class="distribution-note" id="distributionNote">等待去噪结果后显示含噪、去噪结果与真值图像的亮度分布。</div>
+        </div>
+
+        <!-- 系统状态 -->
+        <div class="device-info">
+            <h3 class="chart-title">系统状态</h3>
+            <div class="info-row"><span>计算设备</span><span id="deviceInfo" class="info-value">检测中...</span></div>
+            <div class="info-row"><span>已注册模型</span><span id="modelCount" class="info-value">--</span></div>
+        </div>
+        <div class="panel-bottom-corners" aria-hidden="true">
+            <span class="corner-fix corner-fix--left"></span>
+            <span class="corner-fix corner-fix--right"></span>
+        </div>
+    </aside>
+
+</main>
+
+<div class="preset-modal" id="presetModal" style="display:none;">
+    <div class="preset-modal__backdrop" id="presetModalBackdrop"></div>
+    <div class="preset-modal__dialog glass-panel">
+        <div class="panel__header preset-modal__header">
+            <span class="panel__icon">▣</span>
+            <h2 id="presetModalTitle">选择预置图像</h2>
+            <button class="preset-modal__close" id="presetModalClose" type="button">×</button>
+        </div>
+        <div class="preset-modal__body" id="presetModalBody">
+            <p class="placeholder-text">当前数据集暂无图片</p>
+        </div>
+    </div>
+</div>
+
+<div class="app-modal" id="appModal" style="display:none;">
+    <div class="app-modal__backdrop" id="appModalBackdrop"></div>
+    <div class="app-modal__dialog glass-panel">
+        <div class="panel__header app-modal__header">
+            <span class="panel__icon">✦</span>
+            <h2 id="appModalTitle">提示</h2>
+            <button class="preset-modal__close" id="appModalClose" type="button">×</button>
+        </div>
+        <div class="app-modal__body" id="appModalBody"></div>
+        <div class="app-modal__footer">
+            <button class="mini-btn mini-btn--primary" id="appModalConfirm" type="button">知道了</button>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/app.js' %}?v=20260328-ss-filter"></script>
+</body>
+</html>

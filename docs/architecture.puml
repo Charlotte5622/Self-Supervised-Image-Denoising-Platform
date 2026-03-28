@@ -1,0 +1,127 @@
+@startuml
+title 实时自监督学习图像去噪处理平台 - 项目架构图
+
+skinparam backgroundColor #07111f
+skinparam shadowing false
+skinparam defaultFontName Microsoft YaHei
+skinparam packageStyle rectangle
+skinparam ArrowColor #55d8ff
+skinparam ArrowThickness 1.3
+skinparam package {
+  BackgroundColor #0b1a2d
+  BorderColor #1dd6ff
+  FontColor #e8f1ff
+}
+skinparam rectangle {
+  BackgroundColor #0e2238
+  BorderColor #2ad4ff
+  FontColor #e8f1ff
+  RoundCorner 12
+}
+skinparam database {
+  BackgroundColor #13253d
+  BorderColor #ff4db8
+  FontColor #e8f1ff
+}
+skinparam cloud {
+  BackgroundColor #122742
+  BorderColor #8a6cff
+  FontColor #e8f1ff
+}
+skinparam queue {
+  BackgroundColor #122742
+  BorderColor #8a6cff
+  FontColor #e8f1ff
+}
+
+actor "用户" as User
+
+package "浏览器前端" {
+  rectangle "index.html\n单页控制台 / 中央视图 / 右侧分析" as HTML
+  rectangle "static/js/app.js\n模式切换 / 上传 / 轮询 / ROI / 图表联动" as APPJS
+  rectangle "dashboard.css + ECharts\n赛博风界面 / 柱状图 / 分布图 / Loss 曲线" as UI
+}
+
+package "Django Web 层" {
+  rectangle "manage.py\n本地开发入口" as MANAGE
+  rectangle "urls.py\n页面路由 + API 路由" as URLS
+  rectangle "core/views.py\n上传 / 推理 / 训练 / 对比 / 预置图接口" as VIEWS
+}
+
+package "平台核心服务" {
+  rectangle "core/models.py\nModelManager\n算法发现 / 注册 / 权重加载 / 推理分发" as MODELS
+  rectangle "core/metrics.py\nPSNR / SSIM 计算" as METRICS
+  queue "训练任务线程\nstart_training + status polling" as TRAINER
+}
+
+package "算法层" {
+  rectangle "algorithms/*.py\n统一平台接口封装\npretrained / self_supervised / traditional" as ALG_ENTRY
+  rectangle "algorithms/SSID/*\n预训练与推理相关模型实现" as ALG_SSID
+  rectangle "algorithms/SSSID/*\n自监督训练相关模型实现" as ALG_SSSID
+}
+
+package "文件系统资源" {
+  database "models/weights\n预训练权重" as WEIGHTS
+  database "media/preset\n预置净噪对数据集" as PRESET
+  database "media/uploads\n用户临时上传" as UPLOADS
+  database "media/results\n推理/对比结果" as RESULTS
+  database "media/intermediate\n训练中间结果" as INTER
+  database "static/\ntemplates/" as STATIC
+}
+
+cloud "运行环境\nPython / requirements.txt\nDocker / docker-compose / gunicorn" as RUNTIME
+
+User --> HTML : 打开平台
+HTML --> APPJS : 页面事件绑定
+APPJS --> UI : 更新图表与界面
+
+APPJS --> URLS : AJAX / Fetch
+MANAGE --> URLS : runserver
+URLS --> VIEWS : 分发请求
+
+VIEWS --> MODELS : 推理/训练前获取模型
+VIEWS --> METRICS : 计算指标
+VIEWS --> TRAINER : 启动训练线程
+TRAINER --> MODELS : 获取可训练模型
+TRAINER --> METRICS : 训练中评估
+
+MODELS --> ALG_ENTRY : 自动发现与注册
+ALG_ENTRY --> ALG_SSID : 预训练算法实现
+ALG_ENTRY --> ALG_SSSID : 自监督算法实现
+
+MODELS --> WEIGHTS : 加载权重
+VIEWS --> PRESET : 扫描预置图
+VIEWS --> UPLOADS : 保存/清理上传
+VIEWS --> RESULTS : 写入去噪结果
+TRAINER --> INTER : 写入中间结果
+VIEWS --> STATIC : 渲染模板/静态资源
+
+APPJS --> UPLOADS : 通过 API 上传
+APPJS --> RESULTS : 获取返回图像 URL
+APPJS --> INTER : 轮询训练中间结果
+APPJS --> PRESET : 读取预置图 URL
+
+RUNTIME --> MANAGE
+RUNTIME --> URLS
+RUNTIME --> VIEWS
+RUNTIME --> STATIC
+RUNTIME --> WEIGHTS
+RUNTIME --> PRESET
+
+note right of VIEWS
+三条核心业务链路:
+1. 推理去噪
+2. 自监督训练 + 轮询
+3. 多算法对比 + ROI 局部分析
+end note
+
+note bottom of APPJS
+前端负责:
+- 上传与预置图选择
+- 模式切换
+- 图表渲染
+- 训练状态轮询
+- ROI 局部区域分析
+end note
+
+@enduml
