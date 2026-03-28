@@ -8,6 +8,15 @@
 - 预置数据集选择、临时上传清理、模型动态发现
 
 项目当前以文件系统管理数据，不依赖关系型数据库。
+## 0. 项目UI预览
+<img width="1912" height="994" alt="image" src="https://github.com/user-attachments/assets/5cf93446-8f93-4e9f-b1bf-8bfa0d095830" />
+<img width="1912" height="994" alt="image" src="https://github.com/user-attachments/assets/010e6b08-738e-48d6-af93-3cefa959935b" />
+<img width="1912" height="994" alt="image" src="https://github.com/user-attachments/assets/98bc884a-51ec-4fbf-bbdb-896f956c4f75" />
+<img width="1912" height="994" alt="image" src="https://github.com/user-attachments/assets/8d7ed1cc-f724-4868-8b14-8dc688ed9472" />
+<img width="1912" height="994" alt="image" src="https://github.com/user-attachments/assets/4aa226ba-bea0-4789-aeb2-0cb3c74abcaf" />
+<img width="1912" height="994" alt="image" src="https://github.com/user-attachments/assets/b8732dbd-815c-4e67-b6b7-ca2dc9686a81" />
+
+
 
 ## 1. 目录说明
 
@@ -216,3 +225,5 @@ docker compose up --build
 ```
 
 就可以直接启动整个平台。
+
+
